@@ -408,6 +408,36 @@ func extractMediaInfo(msg *waProto.Message) (mediaType string, filename string, 
 	return "", "", "", nil, nil, nil, 0
 }
 
+// NotifyCrewAIAgent sends the message to the CrewAI agent for processing
+func notifyCrewAIAgent(phoneNumber, name, content string) error {
+	// Prepare the message data
+	messageData := map[string]string{
+		"phone_number": phoneNumber,
+		"message":      content,
+		"name":         name,
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(messageData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal message data: %v", err)
+	}
+
+	// Send HTTP POST request to the CrewAI agent's endpoint
+	resp, err := http.Post("http://0.0.0.0:8000/api/process_message", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to send message to CrewAI agent: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Check the response status
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("CrewAI agent responded with status: %s", resp.Status)
+	}
+
+	return nil
+}
+
 // Handle regular incoming messages with media support
 func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *events.Message, logger waLog.Logger) {
 	// Save message to database
@@ -467,6 +497,18 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 		} else if content != "" {
 			fmt.Printf("[%s] %s %s: %s\n", timestamp, direction, sender, content)
 		}
+	}
+	logger.Infof("Notified CrewAI agent of new message from %s", sender)
+	if sender == "919391469506" {
+		// Notify the CrewAI agent of the new message
+		err = notifyCrewAIAgent(sender, name, content)
+		if err != nil {
+			logger.Warnf("Failed to notify CrewAI agent: %v", err)
+		} else {
+			logger.Infof("Notified CrewAI agent of new message from %s", sender)
+		}
+	} else {
+		logger.Infof("Skipped notifying CrewAI agent of new message from %s", sender)
 	}
 }
 
