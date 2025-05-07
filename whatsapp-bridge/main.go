@@ -422,7 +422,7 @@ func notifyAgent(phoneNumber, name, content string) error {
 		return fmt.Errorf("failed to marshal message data: %v", err)
 	}
 
-	// Send HTTP POST request to the CrewAI agent's endpoint
+	// Send HTTP POST request to the AI agent's endpoint
 	resp, err := http.Post("http://0.0.0.0:8000/api/process_message", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to send message to AI agent: %v", err)
@@ -497,12 +497,14 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 			fmt.Printf("[%s] %s %s: %s\n", timestamp, direction, sender, content)
 		}
 	}
-	logger.Infof("Notified CrewAI agent of new message from %s", sender)
-	err = notifyAgent(sender, name, content)
-	if err != nil {
-		logger.Warnf("Failed to AI agent: %v", err)
-	} else {
-		logger.Infof("Notified AI agent of new message from %s", sender)
+	if sender == "918452976979" {
+		// Notify the AI agent of the new message
+		err = notifyAgent(sender, name, content)
+		if err != nil {
+			logger.Warnf("Failed to notify AI agent: %v", err)
+		} else {
+			logger.Infof("Notified AI agent of new message from %s", sender)
+		}
 	}
 }
 
