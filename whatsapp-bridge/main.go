@@ -497,7 +497,7 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 			fmt.Printf("[%s] %s %s: %s\n", timestamp, direction, sender, content)
 		}
 	}
-	if sender == "919908253382" {
+	if sender == "918452976979" {
 		// Notify the AI agent of the new message
 		err = notifyAgent(sender, name, content)
 		if err != nil {
